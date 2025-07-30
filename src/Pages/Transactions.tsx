@@ -36,6 +36,7 @@ export default function Transactions() {
       setClients(dataClients);
     } catch (err) {
       console.error("Erreur de chargement :", err);
+      throw new Error("Erreur lors du chargement des transactions");
     }
     setChargement(false);
   };
@@ -64,12 +65,12 @@ export default function Transactions() {
       });
 
       if (!res.ok) throw new Error("Erreur lors de la sauvegarde");
-
       await chargerDonnees();
       setAfficherFormulaire(false);
       setTransactionEnEdition(null);
     } catch (err) {
       console.error(err);
+      throw new Error("Erreur lors de la sauvegarde");
     }
   };
 
@@ -86,6 +87,7 @@ export default function Transactions() {
       setTransactionEnEdition(null);
     } catch (err) {
       console.error(err);
+      throw new Error("Erreur lors de la suppression");
     }
   };
 

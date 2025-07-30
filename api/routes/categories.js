@@ -1,6 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
+const Joi = require("joi");
+
+// Schéma de validation pour une catégorie
+const categorieSchema = Joi.object({
+  type: Joi.string().valid("revenu", "depense").required(),
+  nom: Joi.string().trim().min(1).max(55).required()
+});
 
 // Récupérer toutes les catégories (option: filtrer par type)
 router.get("/", (req, res) => {
@@ -19,11 +26,10 @@ router.get("/", (req, res) => {
 
 // Créer une catégorie
 router.post("/", (req, res) => {
-  const { type, nom } = req.body;
+  const { error, value } = categorieSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
 
-  if (!type || !nom) {
-    return res.status(400).json({ error: "Type et nom requis" });
-  }
+  const { type, nom } = value;
 
   db.run(
     "INSERT INTO categories (type, nom) VALUES (?, ?)",
@@ -35,13 +41,12 @@ router.post("/", (req, res) => {
   );
 });
 
-// Modifier une catégorie
+// Modifier une catégorie existante
 router.put("/:id", (req, res) => {
-  const { type, nom } = req.body;
+  const { error, value } = categorieSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
 
-  if (!type || !nom) {
-    return res.status(400).json({ error: "Type et nom requis" });
-  }
+  const { type, nom } = value;
 
   db.run(
     "UPDATE categories SET type = ?, nom = ? WHERE id = ?",

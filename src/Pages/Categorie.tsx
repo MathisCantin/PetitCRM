@@ -28,6 +28,7 @@ export default function Categories() {
       setCategories(data);
     } catch (err) {
       console.error("Erreur de chargement des catégories :", err);
+      throw new Error("Erreur lors du chargement des catégories");
     }
     setChargement(false);
   };
@@ -45,7 +46,9 @@ export default function Categories() {
   const gererSauvegarde = async (categorie) => {
     try {
       const method = categorie.id ? "PUT" : "POST";
-      const url = categorie.id ? `/api/categories/${categorie.id}`: "/api/categories";
+      const url = categorie.id
+        ? `/api/categories/${categorie.id}`
+        : "/api/categories";
 
       const res = await fetch(url, {
         method,
@@ -62,6 +65,7 @@ export default function Categories() {
       setCategorieEnEdition(null);
     } catch (err) {
       console.error(err);
+      throw new Error("Erreur lors de la sauvegarde");
     }
   };
 
@@ -80,6 +84,7 @@ export default function Categories() {
       setCategorieEnEdition(null);
     } catch (err) {
       console.error(err);
+      throw new Error("Erreur lors de la suppression");
     }
   };
 

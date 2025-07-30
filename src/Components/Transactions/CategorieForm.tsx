@@ -82,6 +82,7 @@ export default function CategorieForm({
             value={form.nom}
             onChange={(e) => gereChangement("nom", e.target.value)}
             required
+            maxLength={55}
           />
         </div>
       </div>

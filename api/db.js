@@ -6,19 +6,19 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL
+      name VARCHAR(55) NOT NULL
     )
   `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      clientId TEXT,
+      clientId INTEGER,
       montant REAL,
-      type TEXT,
-      categorie TEXT,
-      statut TEXT,
-      date TEXT,
+      type VARCHAR(55) CHECK(type IN ('revenu', 'depense')) NOT NULL,
+      categorie VARCHAR(55),
+      statut VARCHAR(55),
+      date DATE,
       description TEXT,
       FOREIGN KEY (clientId) REFERENCES clients(id)
     )
@@ -27,8 +27,8 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT CHECK(type IN ('revenu', 'depense')) NOT NULL,
-      nom TEXT NOT NULL
+      type VARCHAR(55) CHECK(type IN ('revenu', 'depense')) NOT NULL,
+      nom VARCHAR(55) NOT NULL
     )
   `);
 

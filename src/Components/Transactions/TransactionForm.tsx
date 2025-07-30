@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
+import { toast } from "sonner";
 import { CalendarIcon, Save, X, Trash2 } from "lucide-react";
 import {
   Select,
@@ -31,7 +32,6 @@ export default function TransactionForm({
     date: transaction?.date || new Date().toISOString().split("T")[0],
     statut: transaction?.statut || "",
     client_id: transaction?.client_id || "none",
-    facture_numero: transaction?.facture_numero || "",
   });
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function TransactionForm({
         const data = await response.json();
         setCategories(data);
       } catch (error) {
+        toast.error("Erreur lors du chargement des catégories.");
         console.error(error);
         setCategories([]);
       }
@@ -55,23 +56,41 @@ export default function TransactionForm({
     setForm({ ...form, [champ]: valeur });
   };
 
-  const gereEnvoie = (e) => {
+  const gereEnvoie = async (e) => {
     e.preventDefault();
+
     const donneesEnvoyees = {
       ...form,
       montant: parseFloat(form.montant),
       client_id: form.client_id === "none" ? null : form.client_id,
     };
-    onSave(donneesEnvoyees);
+
+    try {
+      toast.promise(onSave(donneesEnvoyees), {
+        loading: "Enregistrement en cours...",
+        success: "Transaction enregistrée avec succès !",
+        error: (err) => `Erreur: ${err.message || "échec de l'enregistrement"}`,
+      });
+    } catch (error) {
+      toast.error("Erreur inattendue");
+    }
   };
 
-  const gereSuppression = () => {
+  const gereSuppression = async () => {
     if (transaction?.id && onDelete) {
       const confirmation = window.confirm(
         "Êtes-vous sûr·e de vouloir supprimer cette transaction ?"
       );
       if (confirmation) {
-        onDelete(transaction.id);
+        try {
+          await toast.promise(onDelete(transaction.id), {
+            loading: "Suppression en cours...",
+            success: "Transaction supprimée !",
+            error: "Erreur lors de la suppression",
+          });
+        } catch {
+          toast.error("Erreur inattendue lors de la suppression");
+        }
       }
     }
   };
@@ -143,6 +162,7 @@ export default function TransactionForm({
           value={form.description}
           onChange={(e) => gereChangement("description", e.target.value)}
           required
+          maxLength={500}
         />
       </div>
 
