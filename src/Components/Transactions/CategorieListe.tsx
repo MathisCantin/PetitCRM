@@ -33,7 +33,7 @@ export default function CategoriesListe({
   enChargement,
 }: Props) {
   return (
-    <Card className="w-[400px]">
+    <Card>
       <CardHeader>
         <div className="flex justify-between items-center text-stone-800 font-semibold">
           {`Catégories de ${type}`}

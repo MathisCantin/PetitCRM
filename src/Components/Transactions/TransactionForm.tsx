@@ -4,7 +4,7 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { toast } from "sonner";
-import { CalendarIcon, Save, X, Trash2 } from "lucide-react";
+import { CalendarIcon, Save, X, Trash2, Pencil } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -124,10 +124,10 @@ export default function TransactionForm({
               type="button"
               variant="outline"
               onClick={RedirectionCategories}
-              className="ml-2 h-5 mb-1"
+              className="whitespace-nowrap ml-2 w-6 h-6"
               size="sm"
             >
-              Modifier
+              <Pencil />
             </Button>
           </div>
           <div className="mt-1">

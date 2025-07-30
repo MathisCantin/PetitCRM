@@ -17,7 +17,7 @@ export default function TransactionResume({ transactions }) {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center p-4 gap-4">
-          <CardTitle className="text-sm font-medium text-stone-600">Revenus</CardTitle>
+          <CardTitle className="text-sm font-semibold text-stone-800">Revenus</CardTitle>
           <TrendingUp className="h-4 w-4 text-emerald-500" />
         </CardHeader>
         <CardContent>
@@ -26,7 +26,7 @@ export default function TransactionResume({ transactions }) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center p-4 gap-4">
-          <CardTitle className="text-sm font-medium text-stone-600">Dépenses</CardTitle>
+          <CardTitle className="text-sm font-semibold text-stone-800">Dépenses</CardTitle>
           <TrendingDown className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
@@ -35,7 +35,7 @@ export default function TransactionResume({ transactions }) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center p-4 gap-4">
-          <CardTitle className="text-sm font-medium text-stone-600">Solde</CardTitle>
+          <CardTitle className="text-sm font-semibold text-stone-800">Solde</CardTitle>
           <Wallet className={`h-4 w-4 ${solde >= 0 ? 'text-green-500' : 'text-red-500'}`} />
         </CardHeader>
         <CardContent>

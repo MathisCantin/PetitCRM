@@ -99,7 +99,7 @@ export default function Categories() {
         </div>
       </div>
 
-      <div className="flex gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <CategoriesListe
           categories={categories.filter((c) => c.type === "depense")}
           type="depense"

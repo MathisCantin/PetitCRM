@@ -10,7 +10,7 @@ import {
 } from "@/Components/ui/table";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -44,16 +44,16 @@ export default function Transactions({
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="w-[160px]">
+              <TableHead className="flex items-center">
                 Catégorie
                 <Button
                   type="button"
                   variant="outline"
                   onClick={RedirectionCategories}
-                  className="whitespace-nowrap ml-2 h-5 mb-1"
+                  className="whitespace-nowrap ml-2 w-6 h-6"
                   size="sm"
                 >
-                  Modifier
+                  <Pencil />
                 </Button>
               </TableHead>
               <TableHead>Montant</TableHead>
@@ -94,10 +94,13 @@ export default function Transactions({
                     <Badge
                       className={cn(
                         "capitalize",
-                        !t.statut ? "bg-gray-100 text-gray-500" :
-                        t.statut === "Payé" ? "bg-green-100 text-green-800" :
-                        t.statut === "En_attente" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-red-100 text-red-800"
+                        !t.statut
+                          ? "bg-gray-100 text-gray-500"
+                          : t.statut === "Payé"
+                          ? "bg-green-100 text-green-800"
+                          : t.statut === "En_attente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
                       )}
                     >
                       {t.statut || "N/A"}
