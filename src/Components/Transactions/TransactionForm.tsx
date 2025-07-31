@@ -185,7 +185,7 @@ export default function TransactionForm({
               type="date"
               value={form.date}
               onChange={(e) => gereChangement("date", e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-white px-3 text-black text-base shadow-sm focus-visible:outline-none focus-visible:ring-1"
+              className="h-9 w-full rounded-md border border-input bg-white px-3 text-black"
             />
             <CalendarIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-black pointer-events-none mr-[7px]" />
           </div>
@@ -240,14 +240,14 @@ export default function TransactionForm({
 
         {form.id && (
           <Button type="button" variant="destructive" onClick={gereSuppression}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Supprimer
+            <Trash2 className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Supprimer</span>
           </Button>
         )}
 
         <Button type="submit">
-          <Save className="w-4 h-4 mr-2" />
-          Enregistrer
+          <Save className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Enregistrer</span>
         </Button>
       </div>
     </form>

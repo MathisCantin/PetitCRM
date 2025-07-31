@@ -3,10 +3,20 @@ const db = new sqlite3.Database('./data.db');
 
 // Création des tables
 db.serialize(() => {
-  db.run(`
+ db.run(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name VARCHAR(55) NOT NULL
+      nom VARCHAR(255) NOT NULL,
+      prenom VARCHAR(255),
+      email VARCHAR(255) UNIQUE,
+      telephone VARCHAR(255),
+      adresse VARCHAR(255),
+      ville VARCHAR(255),
+      code_postal VARCHAR(255),
+      pays VARCHAR(255),
+      societe VARCHAR(255),
+      statut VARCHAR(55) CHECK(statut IN ('Actif', 'Inactif', 'Prospect')) DEFAULT 'Prospect',
+      date_creation DATE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 

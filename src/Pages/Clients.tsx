@@ -8,66 +8,62 @@ import {
 import { Plus } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 
-import TransactionForm from "@/Components/Transactions/TransactionForm";
-import TransactionsListe from "@/Components/Transactions/TransactionsListe";
-import TransactionResume from "@/Components/Transactions/TransactionsResume";
+import ClientForm from "@/Components/Clients/ClientForm";
+import ClientList from "@/Components/Clients/ClientsListe";
+import ClientResume from "@/Components/Clients/ClientsResume";
 
-//Page pour gérer les transactions
-export default function Transactions() {
-  const [transactions, setTransactions] = useState([]);
+// Page pour gérer les clients
+export default function ClientPage() {
   const [clients, setClients] = useState([]);
-  const [transactionEnEdition, setTransactionEnEdition] = useState(null);
+  const [clientEnEdition, setClientEnEdition] = useState(null);
   const [afficherFormulaire, setAfficherFormulaire] = useState(false);
   const [chargement, setChargement] = useState(false);
 
   useEffect(() => {
-    chargerDonnees();
+    chargerClients();
   }, []);
 
-  const chargerDonnees = async () => {
+  const chargerClients = async () => {
     setChargement(true);
     try {
-      const resTransactions = await fetch("/api/transactions");
-      const dataTransactions = await resTransactions.json();
-      setTransactions(dataTransactions);
-
-      const resClients = await fetch("/api/clients");
-      const dataClients = await resClients.json();
-      setClients(dataClients);
+      const res = await fetch("/api/clients");
+      const data = await res.json();
+      setClients(data);
     } catch (err) {
       console.error("Erreur de chargement :", err);
-      throw new Error("Erreur lors du chargement des transactions");
     }
     setChargement(false);
   };
 
-  const gererEdition = (transaction) => {
-    setTransactionEnEdition(transaction);
-    setAfficherFormulaire(true);
-  };
-
   const gererAjout = () => {
-    setTransactionEnEdition(null);
+    setClientEnEdition(null);
     setAfficherFormulaire(true);
   };
 
-  const gererSauvegarde = async (transaction) => {
+  const gererEdition = (client) => {
+    setClientEnEdition(client);
+    setAfficherFormulaire(true);
+  };
+
+  const gererSauvegarde = async (client) => {
     try {
-      const method = transactionEnEdition ? "PUT" : "POST";
-      const url = transactionEnEdition
-        ? `/api/transactions/${transactionEnEdition.id}`
-        : "/api/transactions";
+      const method = clientEnEdition ? "PUT" : "POST";
+      const url = clientEnEdition
+        ? `/api/clients/${clientEnEdition.id}`
+        : "/api/clients";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transaction),
+        body: JSON.stringify(client),
       });
 
+      console.log(JSON.stringify(client));
       if (!res.ok) throw new Error("Erreur lors de la sauvegarde");
-      await chargerDonnees();
+
+      await chargerClients();
       setAfficherFormulaire(false);
-      setTransactionEnEdition(null);
+      setClientEnEdition(null);
     } catch (err) {
       console.error(err);
       throw new Error("Erreur lors de la sauvegarde");
@@ -76,15 +72,15 @@ export default function Transactions() {
 
   const gererSuppression = async (id) => {
     try {
-      const res = await fetch(`/api/transactions/${id}`, {
+      const res = await fetch(`/api/clients/${id}`, {
         method: "DELETE",
       });
 
       if (!res.ok) throw new Error("Erreur lors de la suppression");
 
-      await chargerDonnees();
+      await chargerClients();
       setAfficherFormulaire(false);
-      setTransactionEnEdition(null);
+      setClientEnEdition(null);
     } catch (err) {
       console.error(err);
       throw new Error("Erreur lors de la suppression");
@@ -95,20 +91,19 @@ export default function Transactions() {
     <div className="p-2 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-stone-600">Gérez vos revenus et dépenses.</p>
+          <h1 className="text-3xl font-bold">Clients</h1>
+          <p className="text-stone-600">Gérez vos contacts et prospects.</p>
         </div>
 
         <Button onClick={gererAjout}>
           <Plus className="w-4 h-4 mr-2" />
-          Nouvelle transaction
+          Nouveau client
         </Button>
       </div>
 
-      <TransactionResume transactions={transactions} />
+      <ClientResume clients={clients} />
 
-      <TransactionsListe
-        transactions={transactions}
+      <ClientList
         clients={clients}
         enChargement={chargement}
         onEdit={gererEdition}
@@ -118,15 +113,12 @@ export default function Transactions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {transactionEnEdition
-                ? "Modifier la transaction"
-                : "Nouvelle transaction"}
+              {clientEnEdition ? "Modifier le client" : "Nouveau client"}
             </DialogTitle>
           </DialogHeader>
 
-          <TransactionForm
-            transaction={transactionEnEdition}
-            clients={clients}
+          <ClientForm
+            client={clientEnEdition}
             onSave={gererSauvegarde}
             onCancel={() => setAfficherFormulaire(false)}
             onDelete={gererSuppression}

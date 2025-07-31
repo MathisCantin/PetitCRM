@@ -100,14 +100,14 @@ export default function CategorieForm({
             onClick={gereSuppression}
             className="flex items-center"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Supprimer
+            <Trash2 className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Supprimer</span>
           </Button>
         )}
 
         <Button type="submit">
-          <Save className="w-4 h-4 mr-2" />
-          Enregistrer
+          <Save className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Enregistrer</span>
         </Button>
       </div>
     </form>

@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { DollarSign, Home } from "lucide-react";
+import { DollarSign, Home, User } from "lucide-react";
 
 export default function Layout() {
   const location = useLocation();
@@ -26,6 +26,17 @@ export default function Layout() {
           >
             <Home className="w-5 h-5 text-stone-700" />
             <span className="hidden sm:inline">Accueil</span>
+          </Link>
+           <Link
+            to="/clients"
+            className={`flex items-center gap-2 p-2 rounded hover:bg-stone-200 ${
+              location.pathname.startsWith("/clients")
+                ? "bg-stone-300 font-semibold"
+                : ""
+            }`}
+          >
+            <User className="w-5 h-5 text-stone-700" />
+            <span className="hidden sm:inline">Clients</span>
           </Link>
           <Link
             to="/transactions"
