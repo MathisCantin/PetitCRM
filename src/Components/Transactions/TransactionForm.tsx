@@ -214,8 +214,10 @@ export default function TransactionForm({
         <div>
           <Label>Client (optionnel)</Label>
           <Select
-            value={form.client_id || "none"}
-            onValueChange={(v) => gereChangement("client_id", v)}
+            value={form.client_id?.toString() || "none"}
+            onValueChange={(v) =>
+              gereChangement("client_id", v === "none" ? null : parseInt(v))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un client..." />
@@ -223,7 +225,7 @@ export default function TransactionForm({
             <SelectContent>
               <SelectItem value="none">Aucun</SelectItem>
               {clients.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
+                <SelectItem key={c.id} value={c.id.toString()}>
                   {c.prenom} {c.nom}
                 </SelectItem>
               ))}

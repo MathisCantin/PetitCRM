@@ -5,6 +5,7 @@ const Joi = require("joi");
 
 // Schéma de validation pour une catégorie
 const categorieSchema = Joi.object({
+  id: Joi.number().integer().optional(),
   type: Joi.string().valid("revenu", "depense").required(),
   nom: Joi.string().trim().min(1).max(55).required()
 });

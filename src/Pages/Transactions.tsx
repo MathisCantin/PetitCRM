@@ -64,6 +64,7 @@ export default function Transactions() {
         body: JSON.stringify(transaction),
       });
 
+      console.log(JSON.stringify(transaction));
       if (!res.ok) throw new Error("Erreur lors de la sauvegarde");
       await chargerDonnees();
       setAfficherFormulaire(false);

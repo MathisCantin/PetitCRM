@@ -57,7 +57,9 @@ export default function ClientForm({ client, onSave, onCancel, onDelete }) {
 
   const gereSuppression = async () => {
     if (!client?.id) return;
-    const confirmation = window.confirm("Supprimer ce client ?");
+    const confirmation = window.confirm(
+      "Supprimer ce client ? Cette action est irréversible et les transactions liées resteront sans référence au client."
+    );
     if (!confirmation) return;
 
     try {

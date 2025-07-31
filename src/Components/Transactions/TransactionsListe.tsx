@@ -23,8 +23,8 @@ export default function Transactions({
   enChargement,
 }) {
   // Fonction pour récupérer le nom complet du client à partir de son id
-  const recupererNomClient = (idClient) => {
-    const client = clients.find((c) => c.id === idClient);
+  const recupererNomClient = (clientId) => {
+    const client = clients.find((c) => c.id === Number(clientId));
     return client ? `${client.prenom} ${client.nom}` : "N/A";
   };
 
@@ -88,7 +88,7 @@ export default function Transactions({
                     {(t.montant ?? 0).toFixed(2)}$
                   </TableCell>
                   <TableCell>
-                    {t.client_id ? recupererNomClient(t.client_id) : "-"}
+                    {t.clientId ? recupererNomClient(t.clientId) : "-"}
                   </TableCell>
                   <TableCell>
                     <Badge

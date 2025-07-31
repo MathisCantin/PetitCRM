@@ -28,12 +28,12 @@ router.post('/', (req, res) => {
   const { error, value } = transactionSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
 
-  const { id, clientId, montant, type, date, description, categorie, statut } = value;
+  const { id, client_id, montant, type, date, description, categorie, statut } = value;
 
   db.run(
     `INSERT INTO transactions(id, clientId, montant, type, date, description, categorie, statut)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, clientId, montant, type, date, description, categorie, statut],
+    [id, client_id, montant, type, date, description, categorie, statut],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.status(201).json({ ok: "Ajouté avec succès!" });
@@ -46,13 +46,13 @@ router.put('/:id', (req, res) => {
   const { error, value } = transactionSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
 
-  const { clientId, montant, type, date, description, categorie, statut } = value;
+  const { client_id, montant, type, date, description, categorie, statut } = value;
 
   db.run(
     `UPDATE transactions
      SET clientId = ?, montant = ?, type = ?, date = ?, description = ?, categorie = ?, statut = ?
      WHERE id = ?`,
-    [clientId, montant, type, date, description, categorie, statut, req.params.id],
+    [client_id, montant, type, date, description, categorie, statut, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       if (this.changes === 0) return res.status(404).json({ error: "Transaction non trouvée." });
