@@ -1,5 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,22 +15,107 @@ import { Edit, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+} from "@/Components/ui/select";
 
-// Liste pour gérer et consulter les transactions
 export default function Transactions({
   transactions,
   clients,
   onEdit,
   enChargement,
 }) {
-  // Fonction pour récupérer le nom complet du client à partir de son id
+  const [filtreType, setFiltreType] = useState("__all__");
+  const [filtreStatut, setFiltreStatut] = useState("__all__");
+  const [filtreClient, setFiltreClient] = useState("__all__");
+  const [filtreCategorie, setFiltreCategorie] = useState("__all__");
+  const [filtrePeriodeType, setFiltrePeriodeType] = useState("__all__");
+  const [filtrePeriodeValeur, setFiltrePeriodeValeur] = useState("__all__");
+
+  const navigate = useNavigate();
+  const RedirectionCategories = () => navigate("/categories");
+
   const recupererNomClient = (clientId) => {
     const client = clients.find((c) => c.id === Number(clientId));
     return client ? `${client.prenom} ${client.nom}` : "N/A";
   };
 
-  const navigate = useNavigate();
-  const RedirectionCategories = () => navigate("/categories");
+  const categoriesUniques: string[] = Array.from(
+    new Set(transactions.map((t) => t.categorie).filter(Boolean))
+  );
+
+  // Typage explicite et tri
+  const uniqueYears: string[] = Array.from(
+    new Set(transactions.map((t) => new Date(t.date).getFullYear()))
+  )
+    .map(String)
+    .sort((a, b) => b.localeCompare(a));
+
+  const rawMonths: string[] = transactions.map((t) => {
+    const d = new Date(t.date);
+    return `${d.getFullYear()}-${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}`;
+  });
+  const uniqueMonths: string[] = Array.from(new Set(rawMonths)).sort((a, b) =>
+    b.localeCompare(a)
+  );
+
+  // Semaines uniques sous forme yyyy-Sww
+  const rawWeeks: string[] = transactions.map((t) => {
+    const d = new Date(t.date);
+    return format(d, "yyyy-'S'II", { locale: fr });
+  });
+  const uniqueWeeks: string[] = Array.from(new Set(rawWeeks)).sort((a, b) =>
+    b.localeCompare(a)
+  );
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      const tDate = new Date(t.date);
+      const year = tDate.getFullYear();
+      const month = `${year}-${(tDate.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}`;
+      const week = format(tDate, "yyyy-'S'II", { locale: fr });
+
+      const periodeMatch =
+        filtrePeriodeType === "__all__" ||
+        (filtrePeriodeType === "annee" &&
+          filtrePeriodeValeur === String(year)) ||
+        (filtrePeriodeType === "mois" && filtrePeriodeValeur === month) ||
+        (filtrePeriodeType === "semaine" && filtrePeriodeValeur === week);
+
+      return (
+        (filtreType === "__all__" || t.type === filtreType) &&
+        (filtreStatut === "__all__" || t.statut === filtreStatut) &&
+        (filtreClient === "__all__" || t.clientId === Number(filtreClient)) &&
+        (filtreCategorie === "__all__" || t.categorie === filtreCategorie) &&
+        periodeMatch
+      );
+    });
+  }, [
+    transactions,
+    filtreType,
+    filtreStatut,
+    filtreClient,
+    filtreCategorie,
+    filtrePeriodeType,
+    filtrePeriodeValeur,
+  ]);
+
+  const resetFiltres = () => {
+    setFiltreType("__all__");
+    setFiltreStatut("__all__");
+    setFiltreClient("__all__");
+    setFiltreCategorie("__all__");
+    setFiltrePeriodeType("__all__");
+    setFiltrePeriodeValeur("__all__");
+  };
 
   return (
     <Card>
@@ -37,7 +123,106 @@ export default function Transactions({
         <CardTitle className="text-stone-800">
           Historique des transactions
         </CardTitle>
+        <div className="flex flex-wrap gap-4 mt-4 items-center">
+          <Select value={filtreType} onValueChange={setFiltreType}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Tous les types</SelectItem>
+              <SelectItem value="revenu">Revenu</SelectItem>
+              <SelectItem value="depense">Dépense</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filtreStatut} onValueChange={setFiltreStatut}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Tous les statuts</SelectItem>
+              <SelectItem value="Payé">Payé</SelectItem>
+              <SelectItem value="En_attente">En attente</SelectItem>
+              <SelectItem value="Annulé">Annulé</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filtreClient} onValueChange={setFiltreClient}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrer par client" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Tous les clients</SelectItem>
+              {clients.map((c) => (
+                <SelectItem key={String(c.id)} value={String(c.id)}>
+                  {c.prenom} {c.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtreCategorie} onValueChange={setFiltreCategorie}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrer par catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Toutes les catégories</SelectItem>
+              {categoriesUniques.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filtrePeriodeType}
+            onValueChange={(val) => {
+              setFiltrePeriodeType(val);
+              setFiltrePeriodeValeur("__all__");
+            }}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Type de période" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Toutes les périodes</SelectItem>
+              <SelectItem value="annee">Année</SelectItem>
+              <SelectItem value="mois">Mois</SelectItem>
+              <SelectItem value="semaine">Semaine</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {filtrePeriodeType !== "__all__" && (
+            <Select
+              value={filtrePeriodeValeur}
+              onValueChange={setFiltrePeriodeValeur}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder={`Choisir ${filtrePeriodeType}`} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Toutes</SelectItem>
+                {(filtrePeriodeType === "annee"
+                  ? uniqueYears
+                  : filtrePeriodeType === "mois"
+                  ? uniqueMonths
+                  : uniqueWeeks
+                ).map((p) => (
+                  <SelectItem key={String(p)} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Button variant="outline" onClick={resetFiltres}>
+            Réinitialiser
+          </Button>
+        </div>
       </CardHeader>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -50,7 +235,7 @@ export default function Transactions({
                   type="button"
                   variant="outline"
                   onClick={RedirectionCategories}
-                  className="whitespace-nowrap ml-2 w-6 h-6"
+                  className="ml-2 w-6 h-6"
                   size="sm"
                 >
                   <Pencil />
@@ -69,8 +254,8 @@ export default function Transactions({
                   Chargement...
                 </TableCell>
               </TableRow>
-            ) : transactions.length > 0 ? (
-              transactions.map((t) => (
+            ) : filteredTransactions.length > 0 ? (
+              filteredTransactions.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>
                     {format(new Date(t.date), "dd MMM yyyy", { locale: fr })}

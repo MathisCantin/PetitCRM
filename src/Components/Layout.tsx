@@ -9,7 +9,7 @@ export default function Layout() {
       <aside
         className="
           fixed bottom-0 left-0 right-0 h-14 bg-stone-100 p-2 flex flex-row items-center justify-center space-x-8 shadow-md
-          sm:static sm:h-auto sm:w-60 sm:flex-col sm:items-start sm:justify-start sm:space-x-0 sm:space-y-4 sm:p-6 sm:shadow-r-lg
+          sm:static sm:h-auto sm:w-50 sm:flex-col sm:items-start sm:justify-start sm:space-x-0 sm:space-y-4 sm:p-6 sm:shadow-r-lg
           transition-all duration-300
           z-20
         "
@@ -27,7 +27,7 @@ export default function Layout() {
             <Home className="w-5 h-5 text-stone-700" />
             <span className="hidden sm:inline">Accueil</span>
           </Link>
-           <Link
+          <Link
             to="/clients"
             className={`flex items-center gap-2 p-2 rounded hover:bg-stone-200 ${
               location.pathname.startsWith("/clients")
