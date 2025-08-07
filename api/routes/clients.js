@@ -26,6 +26,23 @@ router.get('/', (req, res) => {
   });
 });
 
+// Retourne le résumé des clients
+router.get('/dashboard/clients-resume', (req, res) => {
+  const hjd = new Date().toISOString().slice(0,7);
+  db.all(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(statut='Actif') AS actif,
+      SUM(statut='Inactif') AS inactif,
+      SUM(statut='Prospect') AS prospect,
+      SUM(strftime('%Y-%m', date_creation)=? ) AS ceMois
+    FROM clients
+  `, [hjd], (err, rows) => {
+    if (err) return res.status(500).json({error: err.message});
+    res.json(rows[0] || {});
+  });
+});
+
 // Créer un client
 router.post('/', (req, res) => {
   const { error, value } = clientSchema.validate(req.body);

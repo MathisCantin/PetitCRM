@@ -9,87 +9,111 @@ app.use('/api/categories', categorieRoutes);
 
 beforeAll((done) => {
   db.serialize(() => {
-    db.run("DELETE FROM categories", () => {
-      db.run("INSERT INTO categories (type, nom) VALUES ('revenu', 'TestRevenu')", () => {
-        db.run("INSERT INTO categories (type, nom) VALUES ('depense', 'TestDepense')", done);
-      });
-    });
+    db.run("DROP TABLE IF EXISTS categories");
+    db.run(`
+      CREATE TABLE categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        nom TEXT NOT NULL
+      )
+    `);
+    db.run(`INSERT INTO categories (type, nom) VALUES ('revenu', 'Salaire')`);
+    db.run(`INSERT INTO categories (type, nom) VALUES ('depense', 'Courses')`, done);
   });
 });
 
-describe('API Catégories', () => {
-  let categorieId;
-
-  test('GET /api/categories → doit retourner toutes les catégories', async () => {
+//Tests des routes categories
+describe('API Categories', () => {
+  let createdCategoryId;
+  
+  //Retourne toutes les catégories
+  test('GET /api/categories', async () => {
     const res = await request(app).get('/api/categories');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThanOrEqual(2);
-    categorieId = res.body[0].id;
   });
 
-  test('GET /api/categories?type=revenu → doit retourner uniquement les revenus', async () => {
+  //Filtre par type
+  test('GET /api/categories?type=revenu', async () => {
     const res = await request(app).get('/api/categories?type=revenu');
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    res.body.forEach((cat) => {
-      expect(cat.type).toBe('revenu');
-    });
+    expect(res.body.every(c => c.type === 'revenu')).toBe(true);
   });
 
-  test('POST /api/categories → doit créer une nouvelle catégorie', async () => {
+  //Ajoute une catégorie valide
+  test('POST /api/categories', async () => {
     const res = await request(app).post('/api/categories').send({
       type: 'depense',
-      nom: 'NouveauTest'
+      nom: 'Transport'
     });
     expect(res.statusCode).toBe(201);
-    expect(res.body.id).toBeDefined();
-    expect(res.body.type).toBe('depense');
-    expect(res.body.nom).toBe('NouveauTest');
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.nom).toBe('Transport');
+    createdCategoryId = res.body.id;
   });
 
-  test('POST /api/categories → doit échouer avec des données invalides', async () => {
+  //Retourne error si nom vide
+  test('POST /api/categories', async () => {
     const res = await request(app).post('/api/categories').send({
-      type: 'invalid_type',
+      type: 'depense',
       nom: ''
     });
     expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBeDefined();
+    expect(res.body.error).toMatch(/"nom" is not allowed to be empty/);
   });
 
-  test('PUT /api/categories/:id → doit modifier une catégorie existante', async () => {
-    const res = await request(app).put(`/api/categories/${categorieId}`).send({
+  //Retourne error si type invalide
+  test('POST /api/categories', async () => {
+    const res = await request(app).post('/api/categories').send({
+      type: 'investissement',
+      nom: 'Actions'
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/"type" must be one of/);
+  });
+
+  //Met à jour une catégorie existante
+  test('PUT /api/categories/:id', async () => {
+    const res = await request(app).put(`/api/categories/${createdCategoryId}`).send({
+      type: 'depense',
+      nom: 'Loisirs'
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.nom).toBe('Loisirs');
+  });
+
+  //error si ID inexistant
+  test('PUT /api/categories/:id', async () => {
+    const res = await request(app).put(`/api/categories/9999`).send({
       type: 'revenu',
-      nom: 'TestModifié'
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.nom).toBe('TestModifié');
-  });
-
-  test('PUT /api/categories/:id → doit échouer si l\'ID n\'existe pas', async () => {
-    const res = await request(app).put(`/api/categories/999999`).send({
-      type: 'depense',
-      nom: 'Inexistant'
+      nom: 'Investissement'
     });
     expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvée/i);
+    expect(res.body.error).toBe("Catégorie non trouvée");
   });
 
-  test('DELETE /api/categories/:id → doit supprimer une catégorie', async () => {
-    // Créer une catégorie à supprimer
-    const creation = await request(app).post('/api/categories').send({
-      type: 'depense',
-      nom: 'À supprimer'
+  //error de validation
+  test('PUT /api/categories/:id', async () => {
+    const res = await request(app).put(`/api/categories/${createdCategoryId}`).send({
+      type: 'revenu',
+      nom: ''
     });
-
-    const res = await request(app).delete(`/api/categories/${creation.body.id}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toMatch(/supprimée/i);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/"nom" is not allowed to be empty/);
   });
 
-  test('DELETE /api/categories/:id → doit échouer si la catégorie n\'existe pas', async () => {
-    const res = await request(app).delete('/api/categories/999999');
+  //Supprime une catégorie existante
+  test('DELETE /api/categories/:id', async () => {
+    const res = await request(app).delete(`/api/categories/${createdCategoryId}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Catégorie supprimée");
+  });
+
+  //error si ID inexistant
+  test('DELETE /api/categories/:id', async () => {
+    const res = await request(app).delete('/api/categories/9999');
     expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvée/i);
+    expect(res.body.error).toBe("Catégorie non trouvée");
   });
 });

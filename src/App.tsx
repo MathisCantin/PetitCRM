@@ -1,6 +1,7 @@
 // src/App.tsx
 import { Routes, Route } from "react-router-dom";
 import Layout from "./Components/Layout";
+import TableauBord from "./Pages/TableauBord";
 import Clients from "./Pages/Clients";
 import Transactions from "./Pages/Transactions";
 import Categories from "./Pages/Categories";
@@ -12,10 +13,10 @@ function App() {
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<h1 className="text-3xl font-bold">Bienvenue !</h1>}/>
-          <Route path="clients" element={<Clients />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="categories" element={<Categories />} />
+          <Route index element={<TableauBord/>}/>
+          <Route path="clients" element={<Clients/>} />
+          <Route path="transactions" element={<Transactions/>} />
+          <Route path="categories" element={<Categories/>} />
         </Route>
       </Routes>
     </>

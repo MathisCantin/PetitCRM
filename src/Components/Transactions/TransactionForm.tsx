@@ -204,8 +204,8 @@ export default function TransactionForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Payé">Payé</SelectItem>
-              <SelectItem value="En_attente">En attente</SelectItem>
-              <SelectItem value="En_retard">En retard</SelectItem>
+              <SelectItem value="En attente">En attente</SelectItem>
+              <SelectItem value="En retard">En retard</SelectItem>
               <SelectItem value="Annulé">Annulé</SelectItem>
             </SelectContent>
           </Select>

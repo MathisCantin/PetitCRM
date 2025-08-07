@@ -6,6 +6,8 @@ export default function ClientResume({ clients }) {
   const totalActifs = clients.filter((c) => c.statut === "Actif").length;
   const totalInactifs = clients.filter((c) => c.statut === "Inactif").length;
   const totalProspects = clients.filter((c) => c.statut === "Prospect").length;
+  const currentMonth = new Date().toISOString().slice(0, 7); //(YYYY-MM)
+  const nouveauxCeMois = clients.filter(c => c.date_creation?.slice(0, 7) === currentMonth).length;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -36,6 +38,16 @@ export default function ClientResume({ clients }) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-yellow-600">{totalProspects}</div>
+        </CardContent>
+      </Card>
+
+       <Card>
+        <CardHeader className="flex flex-row items-center p-4 gap-4">
+          <CardTitle className="text-sm font-semibold text-stone-800">Nouveaux ce mois</CardTitle>
+          <UserPlus className="h-4 w-4 text-yellow-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-yellow-600">{nouveauxCeMois}</div>
         </CardContent>
       </Card>
     </div>

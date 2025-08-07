@@ -23,18 +23,19 @@ import {
   SelectContent,
 } from "@/Components/ui/select";
 
+// Liste pour gérer et consulter les transactions
 export default function Transactions({
   transactions,
   clients,
   onEdit,
   enChargement,
 }) {
-  const [filtreType, setFiltreType] = useState("__all__");
-  const [filtreStatut, setFiltreStatut] = useState("__all__");
-  const [filtreClient, setFiltreClient] = useState("__all__");
-  const [filtreCategorie, setFiltreCategorie] = useState("__all__");
-  const [filtrePeriodeType, setFiltrePeriodeType] = useState("__all__");
-  const [filtrePeriodeValeur, setFiltrePeriodeValeur] = useState("__all__");
+  const [filtreType, setFiltreType] = useState("all");
+  const [filtreStatut, setFiltreStatut] = useState("all");
+  const [filtreClient, setFiltreClient] = useState("all");
+  const [filtreCategorie, setFiltreCategorie] = useState("all");
+  const [filtrePeriodeType, setFiltrePeriodeType] = useState("all");
+  const [filtrePeriodeValeur, setFiltrePeriodeValeur] = useState("all");
 
   const navigate = useNavigate();
   const RedirectionCategories = () => navigate("/categories");
@@ -44,57 +45,56 @@ export default function Transactions({
     return client ? `${client.prenom} ${client.nom}` : "N/A";
   };
 
-  const categoriesUniques: string[] = Array.from(
-    new Set(transactions.map((t) => t.categorie).filter(Boolean))
-  );
+  /*Pour les filtres avec des choix pertinents. Fonctionnalité de filtrage aidée par ChatGPT
+  OpenAI. (2025). ChatGPT (version 5 août 2025) [Modèle massif de langage]. https://chat.openai.com/chat*/
+  const categoriesSet = new Set<string>();
+  const anneesSet = new Set<string>();
+  const moisSet = new Set<string>();
+  const semainesSet = new Set<string>();
 
-  // Typage explicite et tri
-  const uniqueYears: string[] = Array.from(
-    new Set(transactions.map((t) => new Date(t.date).getFullYear()))
-  )
-    .map(String)
-    .sort((a, b) => b.localeCompare(a));
+  for (const t of transactions) {
+    if (t.categorie) categoriesSet.add(t.categorie);
 
-  const rawMonths: string[] = transactions.map((t) => {
-    const d = new Date(t.date);
-    return `${d.getFullYear()}-${(d.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}`;
-  });
-  const uniqueMonths: string[] = Array.from(new Set(rawMonths)).sort((a, b) =>
-    b.localeCompare(a)
-  );
+    const date = new Date(t.date);
+    anneesSet.add(String(date.getFullYear()));
+    moisSet.add(format(date, "yyyy-MM"));
+    semainesSet.add(format(date, "yyyy-'S'II", { locale: fr }));
+  }
 
-  // Semaines uniques sous forme yyyy-Sww
-  const rawWeeks: string[] = transactions.map((t) => {
-    const d = new Date(t.date);
-    return format(d, "yyyy-'S'II", { locale: fr });
-  });
-  const uniqueWeeks: string[] = Array.from(new Set(rawWeeks)).sort((a, b) =>
-    b.localeCompare(a)
-  );
+  const categories = Array.from(categoriesSet);
+  const annees = Array.from(anneesSet).sort().reverse();
+  const mois = Array.from(moisSet).sort().reverse();
+  const semaines = Array.from(semainesSet).sort().reverse();
 
-  const filteredTransactions = useMemo(() => {
+  const resetFiltres = () => {
+    setFiltreType("all");
+    setFiltreStatut("all");
+    setFiltreClient("all");
+    setFiltreCategorie("all");
+    setFiltrePeriodeType("all");
+    setFiltrePeriodeValeur("all");
+  };
+
+  const transactionsFiltrer = useMemo(() => {
     return transactions.filter((t) => {
       const tDate = new Date(t.date);
       const year = tDate.getFullYear();
-      const month = `${year}-${(tDate.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}`;
+      const month = format(tDate, "yyyy-MM");
       const week = format(tDate, "yyyy-'S'II", { locale: fr });
 
       const periodeMatch =
-        filtrePeriodeType === "__all__" ||
+        filtrePeriodeType === "all" ||
+        filtrePeriodeValeur === "all" ||
         (filtrePeriodeType === "annee" &&
           filtrePeriodeValeur === String(year)) ||
         (filtrePeriodeType === "mois" && filtrePeriodeValeur === month) ||
         (filtrePeriodeType === "semaine" && filtrePeriodeValeur === week);
 
       return (
-        (filtreType === "__all__" || t.type === filtreType) &&
-        (filtreStatut === "__all__" || t.statut === filtreStatut) &&
-        (filtreClient === "__all__" || t.clientId === Number(filtreClient)) &&
-        (filtreCategorie === "__all__" || t.categorie === filtreCategorie) &&
+        (filtreType === "all" || t.type === filtreType) &&
+        (filtreStatut === "all" || t.statut === filtreStatut) &&
+        (filtreClient === "all" || t.clientId === Number(filtreClient)) &&
+        (filtreCategorie === "all" || t.categorie === filtreCategorie) &&
         periodeMatch
       );
     });
@@ -108,15 +108,6 @@ export default function Transactions({
     filtrePeriodeValeur,
   ]);
 
-  const resetFiltres = () => {
-    setFiltreType("__all__");
-    setFiltreStatut("__all__");
-    setFiltreClient("__all__");
-    setFiltreCategorie("__all__");
-    setFiltrePeriodeType("__all__");
-    setFiltrePeriodeValeur("__all__");
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -125,34 +116,35 @@ export default function Transactions({
         </CardTitle>
         <div className="flex flex-wrap gap-4 mt-4 items-center">
           <Select value={filtreType} onValueChange={setFiltreType}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Filtrer par type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Tous les types</SelectItem>
+              <SelectItem value="all">Tous les types</SelectItem>
               <SelectItem value="revenu">Revenu</SelectItem>
               <SelectItem value="depense">Dépense</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={filtreStatut} onValueChange={setFiltreStatut}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filtrer par statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Tous les statuts</SelectItem>
+              <SelectItem value="all">Tous les statuts</SelectItem>
               <SelectItem value="Payé">Payé</SelectItem>
-              <SelectItem value="En_attente">En attente</SelectItem>
+              <SelectItem value="En attente">En attente</SelectItem>
+              <SelectItem value="En retard">En retard</SelectItem>
               <SelectItem value="Annulé">Annulé</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={filtreClient} onValueChange={setFiltreClient}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[145px]">
               <SelectValue placeholder="Filtrer par client" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Tous les clients</SelectItem>
+              <SelectItem value="all">Tous les clients</SelectItem>
               {clients.map((c) => (
                 <SelectItem key={String(c.id)} value={String(c.id)}>
                   {c.prenom} {c.nom}
@@ -162,12 +154,12 @@ export default function Transactions({
           </Select>
 
           <Select value={filtreCategorie} onValueChange={setFiltreCategorie}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrer par catégorie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Toutes les catégories</SelectItem>
-              {categoriesUniques.map((cat) => (
+              <SelectItem value="all">Toutes les catégories</SelectItem>
+              {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
@@ -179,21 +171,21 @@ export default function Transactions({
             value={filtrePeriodeType}
             onValueChange={(val) => {
               setFiltrePeriodeType(val);
-              setFiltrePeriodeValeur("__all__");
+              setFiltrePeriodeValeur("all");
             }}
           >
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[170px]">
               <SelectValue placeholder="Type de période" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Toutes les périodes</SelectItem>
+              <SelectItem value="all">Toutes les périodes</SelectItem>
               <SelectItem value="annee">Année</SelectItem>
               <SelectItem value="mois">Mois</SelectItem>
               <SelectItem value="semaine">Semaine</SelectItem>
             </SelectContent>
           </Select>
 
-          {filtrePeriodeType !== "__all__" && (
+          {filtrePeriodeType !== "all" && (
             <Select
               value={filtrePeriodeValeur}
               onValueChange={setFiltrePeriodeValeur}
@@ -202,12 +194,12 @@ export default function Transactions({
                 <SelectValue placeholder={`Choisir ${filtrePeriodeType}`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">Toutes</SelectItem>
+                <SelectItem value="all">Toutes</SelectItem>
                 {(filtrePeriodeType === "annee"
-                  ? uniqueYears
+                  ? annees
                   : filtrePeriodeType === "mois"
-                  ? uniqueMonths
-                  : uniqueWeeks
+                  ? mois
+                  : semaines
                 ).map((p) => (
                   <SelectItem key={String(p)} value={p}>
                     {p}
@@ -254,8 +246,8 @@ export default function Transactions({
                   Chargement...
                 </TableCell>
               </TableRow>
-            ) : filteredTransactions.length > 0 ? (
-              filteredTransactions.map((t) => (
+            ) : transactionsFiltrer.length > 0 ? (
+              transactionsFiltrer.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>
                     {format(new Date(t.date), "dd MMM yyyy", { locale: fr })}
@@ -283,7 +275,7 @@ export default function Transactions({
                           ? "bg-gray-100 text-gray-500"
                           : t.statut === "Payé"
                           ? "bg-green-100 text-green-800"
-                          : t.statut === "En_attente"
+                          : t.statut === "En attente"
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-red-100 text-red-800"
                       )}

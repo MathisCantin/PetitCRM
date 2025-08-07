@@ -23,24 +23,22 @@ import { Input } from "@/Components/ui/input";
 
 // Liste des clients avec filtres et bouton de réinitialisation
 export default function ClientList({ clients, onEdit, enChargement }) {
-  const [filtreStatut, setFiltreStatut] = useState("__all__");
+  const [filtreStatut, setFiltreStatut] = useState("all");
   const [filtreTexte, setFiltreTexte] = useState("");
 
   const resetFiltres = () => {
-    setFiltreStatut("__all__");
+    setFiltreStatut("all");
     setFiltreTexte("");
   };
 
   const clientsFiltres = useMemo(() => {
     return clients.filter((client) => {
-      const matchStatut =
-        filtreStatut === "__all__" || client.statut === filtreStatut;
+      const matchStatut = filtreStatut === "all" || client.statut === filtreStatut;
 
       const matchTexte =
         filtreTexte.trim() === "" ||
         `${client.nom} ${client.prenom} ${client.societe || ""}`
-          .toLowerCase()
-          .includes(filtreTexte.trim().toLowerCase());
+          .toLowerCase().includes(filtreTexte.trim().toLowerCase());
 
       return matchStatut && matchTexte;
     });
@@ -61,11 +59,11 @@ export default function ClientList({ clients, onEdit, enChargement }) {
             onChange={(e) => setFiltreTexte(e.target.value)}
           />
           <Select value={filtreStatut} onValueChange={setFiltreStatut}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filtrer par statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Tous les statuts</SelectItem>
+              <SelectItem value="all">Tous les statuts</SelectItem>
               <SelectItem value="Actif">Actif</SelectItem>
               <SelectItem value="Inactif">Inactif</SelectItem>
               <SelectItem value="Prospect">Prospect</SelectItem>

@@ -13,10 +13,7 @@ const categorieSchema = Joi.object({
 // Récupérer toutes les catégories (option: filtrer par type)
 router.get("/", (req, res) => {
   const type = req.query.type;
-  const query = type
-    ? "SELECT * FROM categories WHERE type = ?"
-    : "SELECT * FROM categories";
-
+  const query = type ? "SELECT * FROM categories WHERE type = ?" : "SELECT * FROM categories";
   const params = type ? [type] : [];
 
   db.all(query, params, (err, rows) => {
@@ -29,7 +26,6 @@ router.get("/", (req, res) => {
 router.post("/", (req, res) => {
   const { error, value } = categorieSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
-
   const { type, nom } = value;
 
   db.run(
@@ -46,7 +42,6 @@ router.post("/", (req, res) => {
 router.put("/:id", (req, res) => {
   const { error, value } = categorieSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
-
   const { type, nom } = value;
 
   db.run(

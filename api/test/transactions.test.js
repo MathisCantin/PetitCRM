@@ -8,9 +8,20 @@ app.use(express.json());
 app.use('/api/transactions', transactionRoutes);
 
 beforeAll((done) => {
-  // Réinitialiser les données de test
   db.serialize(() => {
-    db.run("DELETE FROM transactions");
+    db.run("DROP TABLE IF EXISTS transactions");
+    db.run(`
+      CREATE TABLE transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        clientId INTEGER,
+        montant REAL NOT NULL,
+        type TEXT NOT NULL,
+        date TEXT NOT NULL,
+        description TEXT NOT NULL,
+        categorie TEXT,
+        statut TEXT
+      )
+    `);
     db.run(`
       INSERT INTO transactions (clientId, montant, type, date, description, categorie, statut)
       VALUES (NULL, 100.5, 'revenu', '2025-07-30', 'Transaction test', 'Autre', 'Payé')
@@ -18,10 +29,12 @@ beforeAll((done) => {
   });
 });
 
+//Tests des routes transactions
 describe('API Transactions', () => {
   let transactionId;
 
-  test('GET /api/transactions → doit retourner toutes les transactions', async () => {
+  //Retourne toutes les transactions
+  test('GET /api/transactions', async () => {
     const res = await request(app).get('/api/transactions');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -29,74 +42,127 @@ describe('API Transactions', () => {
     transactionId = res.body[0].id;
   });
 
-  test('POST /api/transactions → doit ajouter une nouvelle transaction', async () => {
+  //Ajoute une nouvelle transaction
+  test('POST /api/transactions', async () => {
     const nouvelleTransaction = {
       client_id: null,
       montant: 200.75,
       type: 'depense',
       categorie: 'Nourriture',
-      statut: 'En_attente',
+      statut: 'En attente',
       date: '2025-07-30',
       description: 'Achat au marché'
     };
 
     const res = await request(app).post('/api/transactions').send(nouvelleTransaction);
     expect(res.statusCode).toBe(201);
-    expect(res.body.ok).toMatch(/Ajouté avec succès/i);
+    expect(res.body.ok).toBe("Ajouté avec succès!");
   });
 
-  test('POST /api/transactions → doit échouer avec des données invalides', async () => {
-    const transactionInvalide = {
-      montant: -100,
-      type: 'invalid',
-      date: 'mauvaise-date',
-      description: ''
-    };
-
-    const res = await request(app).post('/api/transactions').send(transactionInvalide);
+  //Retourne une erreur si le montant est manquant
+  test('POST /api/transactions', async () => {
+    const res = await request(app).post('/api/transactions').send({
+      client_id: null,
+      type: 'revenu',
+      date: '2025-07-30',
+      description: 'Transaction invalide'
+    });
     expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBeDefined();
+    expect(res.body.error).toMatch(/"montant" is required/);
   });
 
-  test('PUT /api/transactions/:id → doit mettre à jour une transaction existante', async () => {
+  //Retourne une erreur si type invalide
+  test('POST /api/transactions', async () => {
+    const res = await request(app).post('/api/transactions').send({
+      client_id: null,
+      montant: 120,
+      type: 'investissement',
+      categorie: 'Crypto',
+      statut: 'Payé',
+      date: '2025-08-01',
+      description: 'Erreur de type'
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/"type" must be one of/);
+  });
+
+  //Mettre à jour une transaction existante
+  test('PUT /api/transactions/:id', async () => {
     const res = await request(app).put(`/api/transactions/${transactionId}`).send({
       client_id: null,
-      montant: 999,
+      montant: 150.00,
       type: 'revenu',
-      categorie: 'Vente',
+      categorie: 'Salaire',
       statut: 'Payé',
-      date: '2025-07-30',
-      description: 'Mise à jour test'
+      date: '2025-07-31',
+      description: 'Transaction modifiée'
     });
-
     expect(res.statusCode).toBe(200);
-    expect(res.body.ok).toMatch(/mise à jour/i);
+    expect(res.body.ok).toBe("Transaction mise à jour avec succès!");
   });
 
-  test('PUT /api/transactions/:id → doit échouer si l\'ID est inexistant', async () => {
-    const res = await request(app).put(`/api/transactions/999999`).send({
+  //Retourne une erreur si la transaction n'existe pas
+  test('PUT /api/transactions/:id', async () => {
+    const res = await request(app).put('/api/transactions/9999').send({
       client_id: null,
       montant: 100,
-      type: 'revenu',
-      categorie: 'Divers',
-      statut: 'Payé',
+      type: 'depense',
+      categorie: 'Inconnu',
+      statut: 'Annulé',
       date: '2025-07-30',
-      description: 'Impossible'
+      description: 'Transaction fantôme'
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe("Transaction non trouvée.");
+  });
+
+  //Supprime une transaction existante
+  test('DELETE /api/transactions/:id', async () => {
+    const ajout = await request(app).post('/api/transactions').send({
+      client_id: 2,
+      montant: 80,
+      type: 'depense',
+      categorie: 'Test',
+      statut: 'Payé',
+      date: '2025-08-01',
+      description: 'À supprimer'
     });
 
-    expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvée/i);
-  });
+    expect(ajout.statusCode).toBe(201);
 
-  test('DELETE /api/transactions/:id → doit supprimer une transaction existante', async () => {
-    const res = await request(app).delete(`/api/transactions/${transactionId}`);
+    const list = await request(app).get('/api/transactions');
+    const idASupprimer = list.body.find(t => t.description === 'À supprimer').id;
+
+    const res = await request(app).delete(`/api/transactions/${idASupprimer}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body.ok).toMatch(/supprimée/i);
+    expect(res.body.ok).toBe("Transaction supprimée avec succès!");
   });
 
-  test('DELETE /api/transactions/:id → doit échouer si la transaction n\'existe pas', async () => {
-    const res = await request(app).delete(`/api/transactions/999999`);
+  //Erreur si transaction est inexistante
+  test('DELETE /api/transactions/:id', async () => {
+    const res = await request(app).delete('/api/transactions/9999');
     expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvée/i);
+    expect(res.body.error).toBe("Transaction non trouvée.");
+  });
+
+  //Retourne le solde mensuel
+  test('GET /api/transactions/solde-par-mois', async () => {
+    const res = await request(app).get('/api/transactions/solde-par-mois');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body[0]).toHaveProperty('mois');
+    expect(res.body[0]).toHaveProperty('solde');
+  });
+
+  //Retourne total par catégorie de dépense
+  test('GET /api/transactions/par-categorie', async () => {
+    const res = await request(app).get('/api/transactions/par-categorie');
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    if (res.body.length > 0) {
+      expect(res.body[0]).toHaveProperty('categorie');
+      expect(res.body[0]).toHaveProperty('total');
+    }
   });
 });

@@ -9,18 +9,36 @@ app.use('/api/clients', clientRoutes);
 
 beforeAll((done) => {
   db.serialize(() => {
-    db.run("DELETE FROM clients");
+    db.run("DROP TABLE IF EXISTS clients");
+    db.run(`
+      CREATE TABLE clients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nom TEXT NOT NULL,
+        prenom TEXT NOT NULL,
+        email TEXT,
+        telephone TEXT,
+        adresse TEXT,
+        ville TEXT,
+        code_postal TEXT,
+        pays TEXT,
+        societe TEXT,
+        statut TEXT,
+        date_creation TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     db.run(`
       INSERT INTO clients (nom, prenom, email, telephone, adresse, ville, code_postal, pays, societe, statut)
-      VALUES ('Jean', 'Dupont', 'jean@example.com', '0601020304', '1 rue Paris', 'Paris', '75000', 'France', 'Dupont SARL', 'Actif')
+      VALUES ('Durand', 'Alice', 'alice@example.com', '0123456789', '1 rue de Paris', 'Paris', '75000', 'France', 'ACME', 'Actif')
     `, done);
   });
 });
 
+//Tests des routes clients
 describe('API Clients', () => {
   let clientId;
 
-  test('GET /api/clients → devrait retourner tous les clients', async () => {
+  //Retourne tous les client
+  test('GET /api/clients', async () => {
     const res = await request(app).get('/api/clients');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -28,89 +46,146 @@ describe('API Clients', () => {
     clientId = res.body[0].id;
   });
 
-  test('POST /api/clients → devrait ajouter un nouveau client', async () => {
-    const nouveauClient = {
-      nom: "Marie",
-      prenom: "Curie",
-      email: "marie.curie@example.com",
-      telephone: "0612345678",
-      adresse: "Rue des Sciences",
-      ville: "Paris",
-      code_postal: "75005",
-      pays: "France",
-      societe: "Laboratoire Curie",
-      statut: "Prospect"
-    };
-
-    const res = await request(app).post('/api/clients').send(nouveauClient);
-    expect(res.statusCode).toBe(201);
-    expect(res.body.nom).toBe("Marie");
-  });
-
-  test('POST /api/clients → devrait échouer avec email invalide', async () => {
-    const clientInvalide = {
-      nom: "Faux",
-      prenom: "Email",
-      email: "pas-un-mail",
-      telephone: "",
-      adresse: "",
-      ville: "",
-      code_postal: "",
-      pays: "",
-      societe: "",
-      statut: "Actif"
-    };
-
-    const res = await request(app).post('/api/clients').send(clientInvalide);
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/email/i);
-  });
-
-  test('PUT /api/clients/:id → devrait mettre à jour un client existant', async () => {
-    const res = await request(app).put(`/api/clients/${clientId}`).send({
-      nom: "Jean-Michel",
-      prenom: "Durand",
-      email: "jean.michel@example.com",
-      telephone: "0712345678",
-      adresse: "Nouvelle adresse",
+  //Ajoute un nouveau client
+  test('POST /api/clients', async () => {
+    const newClient = {
+      nom: "Martin",
+      prenom: "Jean",
+      email: "jean@example.com",
+      telephone: "0600000000",
+      adresse: "2 avenue des Champs",
       ville: "Lyon",
       code_postal: "69000",
       pays: "France",
-      societe: "Durand Corp",
+      societe: "Entreprise X",
+      statut: "Prospect"
+    };
+
+    const res = await request(app).post('/api/clients').send(newClient);
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty("id");
+    expect(res.body.nom).toBe("Martin");
+  });
+
+  //error si données invalides
+  test('POST /api/clients', async () => {
+    const res = await request(app).post('/api/clients').send({
+      prenom: "SansNom"
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/"nom" is required/);
+  });
+
+  //Met à jour un client existant
+  test('PUT /api/clients/:id', async () => {
+    const res = await request(app).put(`/api/clients/${clientId}`).send({
+      nom: "Durand",
+      prenom: "Alice",
+      email: "nouvel.email@example.com",
+      telephone: "0999999999",
+      adresse: "1 rue modifiée",
+      ville: "Paris",
+      code_postal: "75001",
+      pays: "France",
+      societe: "ACME Corp",
+      statut: "Inactif"
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.ok).toBe("Client mis à jour avec succès.");
+  });
+
+  //error si client inexistant
+  test('PUT /api/clients/:id', async () => {
+    const res = await request(app).put('/api/clients/9999').send({
+      nom: "Ghost",
+      prenom: "Client",
+      email: null,
+      telephone: null,
+      adresse: null,
+      ville: null,
+      code_postal: null,
+      pays: null,
+      societe: null,
+      statut: "Prospect"
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe("Client non trouvé.");
+  });
+
+  //Supprime un client
+  test('DELETE /api/clients/:id', async () => {
+    const ajout = await request(app).post('/api/clients').send({
+      nom: "Test",
+      prenom: "Supprimer",
+      email: "test@supprimer.com",
+      telephone: "0101010101",
+      adresse: "null",
+      ville: "Testville",
+      code_postal: "00000",
+      pays: "Testpays",
+      societe: "TestSociete",
       statut: "Inactif"
     });
 
+    const idToDelete = ajout.body.id;
+
+    const res = await request(app).delete(`/api/clients/${idToDelete}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body.ok).toMatch(/mis à jour/i);
+    expect(res.body.ok).toBe("Client supprimé avec succès.");
   });
 
-  test('PUT /api/clients/:id → devrait échouer si l\'ID n\'existe pas', async () => {
-    const res = await request(app).put(`/api/clients/999999`).send({
-      nom: "Personne",
-      prenom: "Inconnu",
-      email: "inconnu@example.com",
-      telephone: "",
-      adresse: "",
-      ville: "",
-      code_postal: "",
-      pays: "",
-      societe: "",
+  //error si client inexistant'
+  test('DELETE /api/clients/:id', async () => {
+    const res = await request(app).delete('/api/clients/9999');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe("Client non trouvé.");
+  });
+
+  //Retourne le résumé des clients
+  test('GET /api/clients/dashboard/clients-resume', async () => {
+    const res = await request(app).get('/api/clients/dashboard/clients-resume');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('total');
+    expect(res.body).toHaveProperty('actif');
+    expect(res.body).toHaveProperty('inactif');
+    expect(res.body).toHaveProperty('prospect');
+    expect(res.body).toHaveProperty('ceMois');
+  });
+
+  test('POST /api/clients - accepte email vide ou null', async () => {
+    const res = await request(app).post('/api/clients').send({
+      nom: "SansEmail",
+      prenom: "Test",
+      email: "",
+      telephone: "0123456789",
+      adresse: "Rue X",
+      ville: "Nice",
+      code_postal: "06000",
+      pays: "France",
+      societe: "TestCorp",
       statut: "Prospect"
     });
 
-    expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvé/i);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.email).toBe("");
   });
 
-  test('DELETE /api/clients/:id → devrait supprimer un client', async () => {
-    const res = await request(app).delete(`/api/clients/${clientId}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.ok).toMatch(/supprimé/i);
-  });
+  //Accepte les valeurs facultatives (nulles)
+  test('POST /api/clients', async () => {
+    const res = await request(app).post('/api/clients').send({
+      nom: "Test",
+      prenom: "Facultatif",
+      email: null,
+      telephone: null,
+      adresse: null,
+      ville: null,
+      code_postal: null,
+      pays: null,
+      societe: null,
+      statut: "Prospect"
+    });
 
-  test('DELETE /api/clients/:id → devrait échouer si le client n\'existe pas', async () => {
-    const res = await request(app).delete(`/api/clients/999999`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/non trouvé/i);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.telephone).toBe(null);
   });
 });
